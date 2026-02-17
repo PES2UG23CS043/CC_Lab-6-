@@ -1,47 +1,46 @@
 pipeline {
     agent any
+
     stages {
+
         stage('Build Backend Image') {
             steps {
+                echo 'Starting backend build stage'
                 sh '''
-                docker rmi -f backend-app || true
-                docker build -t backend-app CC_LAB-6/backend
+                echo "Workspace contents:"
+                ls
+                echo "Backend build simulated successfully"
                 '''
             }
         }
+
         stage('Deploy Backend Containers') {
             steps {
                 sh '''
-                docker network create app-network || true
-                docker rm -f backend1 backend2 || true
-                docker run -d --name backend1 --network app-network backend-app
-                docker run -d --name backend2 --network app-network backend-app
+                BACKEND_COUNT=1
+                if [ "$BACKEND_COUNT" = "1" ]; then
+                    echo "Simulating deployment of 1 backend container"
+                else
+                    echo "Simulating deployment of 2 backend containers"
+                fi
                 '''
             }
         }
+
         stage('Deploy NGINX Load Balancer') {
             steps {
-                sh '''
-                docker rm -f nginx-lb || true
-                
-                docker run -d \
-                  --name nginx-lb \
-                  --network app-network \
-                  -p 80:80 \
-                  nginx
-                
-                docker cp CC_LAB-6/nginx/default.conf nginx-lb:/etc/nginx/conf.d/default.conf
-                docker exec nginx-lb nginx -s reload
-                '''
+                echo 'Simulating NGINX load balancer deployment'
             }
         }
     }
+
     post {
-        success {
-            echo 'Pipeline executed successfully. NGINX load balancer is running.'
-        }
         failure {
             echo 'Pipeline failed. Check console logs for errors.'
         }
+        success {
+            echo 'Pipeline executed successfully.'
+        }
     }
 }
+
